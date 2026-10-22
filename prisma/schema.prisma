@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
+
+enum SellingUnit {
+  PIECE
+  PACK
+  KILOGRAM
+  GRAM
+  LITER
+  MILLILITER
+  SACK
+  BOX
+  BOTTLE
+  CAN
+}
+
+enum WeightUnit {
+  GRAM
+  KILOGRAM
+  MILLILITER
+  LITER
+  NONE
+}
+
+enum AuditAction {
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  ACTIVATE
+  DEACTIVATE
+  PASSWORD_CHANGE
+  IMPORT
+  SETTINGS_UPDATE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(STAFF)
+  isActive      Boolean   @default(true)
+  tokenVersion  Int       @default(0)
+  lastLoginAt   DateTime?
+  avatarUrl     String?
+  address       String?
+  contactNumber String?
+  storeName     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  createdProducts Product[]  @relation("ProductCreatedBy")
+  updatedProducts Product[]  @relation("ProductUpdatedBy")
+  storeProducts   Product[]  @relation("ProductStore")
+  storeScans      ScanLog[]  @relation("ScanStore")
+  storeAuditLogs  AuditLog[] @relation("AuditStore")
+  scans           ScanLog[]
+  auditLogs       AuditLog[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  storeId     String
+  barcode     String
+  name        String
+  brand       String?
+  category    String?
+  description String?
+  sellingUnit SellingUnit @default(PIECE)
+  weight      Decimal     @default(0) @db.Decimal(10, 3)
+  weightUnit  WeightUnit  @default(GRAM)
+  price       Decimal     @db.Decimal(12, 2)
+  stock       Decimal     @default(0) @db.Decimal(12, 3)
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+  createdById String?
+  updatedById String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  store     User        @relation("ProductStore", fields: [storeId], references: [id], onDelete: Cascade)
+  createdBy User?       @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?       @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  scans     ScanLog[]
+
+  @@unique([storeId, barcode])
+  @@index([storeId])
+  @@index([name])
+  @@index([category])
+  @@index([isActive])
+}
+
+model ScanLog {
+  id             String   @id @default(cuid())
+  storeId        String?
+  barcode        String
+  productId      String?
+  productName    String?
+  priceSnapshot  Decimal? @db.Decimal(12, 2)
+  weightSnapshot Decimal? @db.Decimal(10, 3)
+  weightUnit     WeightUnit?
+  source         String   @default("WEB")
+  ipAddress      String?
+  userAgent      String?
+  userId         String?
+  createdAt      DateTime @default(now())
+
+  store   User?    @relation("ScanStore", fields: [storeId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, createdAt])
+  @@index([barcode, createdAt])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  storeId    String?
+  action     AuditAction
+  entity     String
+  entityId   String?
+  actorId    String?
+  actorEmail String?
+  changes    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  store User? @relation("AuditStore", fields: [storeId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, createdAt])
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

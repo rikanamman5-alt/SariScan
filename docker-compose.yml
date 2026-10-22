@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: sariscan-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sariscan
+      POSTGRES_PASSWORD: sariscan
+      POSTGRES_DB: sariscan
+    ports:
+      - "5433:5432"
+    volumes:
+      - sariscan_pgdata:/var/lib/postgresql/data
+
+volumes:
+  sariscan_pgdata:
