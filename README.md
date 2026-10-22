@@ -111,7 +111,8 @@ The bootstrap Super Admin account is created from `SUPER_ADMIN_*`. Change these 
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string. |
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by the app (pooled is fine). |
+| `DATABASE_URL_UNPOOLED` | Yes | Direct PostgreSQL connection used by Prisma Migrate. Neon/Supabase provide this automatically. |
 | `AUTH_SECRET` | Yes | Secret used to sign JWTs. Use at least 32 random bytes. |
 | `AUTH_COOKIE_NAME` | No | Cookie name. Default: `sariscan_token`. |
 | `AUTH_TOKEN_TTL_DAYS` | No | Session lifetime in days. Default: `7`. |
