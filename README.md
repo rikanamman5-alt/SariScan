@@ -2,6 +2,8 @@
 
 A mobile-first barcode price checker for sari-sari stores. Scan a product barcode and instantly see the **product name, net weight, and price** — no app store install required.
 
+**Live:** https://sariscan-rust.vercel.app
+
 SariScan includes a private store scanner, a role-based admin dashboard, a JSON product importer, scan analytics, and a full audit trail. Each account has its own store workspace, so products, scans, audit logs, and PDF exports never mix with another store's data.
 
 ## Features
